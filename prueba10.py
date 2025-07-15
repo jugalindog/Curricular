@@ -22,23 +22,59 @@ basura = {
 
 # --- Malla curricular con créditos y tipo ---
 malla_curricular = {
-    "Fitomejoramiento": {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Trabajo de Grado": {"semestre": 10, "creditos": 6, "tipo_asignatura": "Disciplinar"},
-    "Práctica Profesional": {"semestre": 10, "creditos": 6, "tipo_asignatura": "Disciplinar"},
-    "Producción de frutales": {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
-    "Producción de cultivos de clima calido": {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
-    "Cultivos perennes industriales": {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
-    # Agrega más si es necesario...
+   "Introducción a la ingeniería agronómica": {"semestre": 1, "creditos": 2, "tipo_asignatura": "Disciplinar"},
+    "Matemáticas Básicas":                     {"semestre": 1, "creditos": 3, "tipo_asignatura": "Nivelación"},
+    "Biología de plantas":                     {"semestre": 1, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Lecto-Escritura":                         {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
+    "Química básica":                          {"semestre": 1, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Cálculo diferencial":                  {"semestre": 1, "creditos": 4, "tipo_asignatura": "Fund. Obligatoria"},
+    "Cálculo Integral":                     {"semestre": 2, "creditos": 4, "tipo_asignatura": "Fund. Obligatoria"},
+    "Fundamentos de mecánica":              {"semestre": 2, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Botánica taxonómica":                  {"semestre": 2, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Laboratorio de química básica":        {"semestre": 2, "creditos": 1, "tipo_asignatura": "Fund. Obligatoria"},
+    "Ciencia del suelo":                    {"semestre": 3, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Laboratorio bioquímica básica":        {"semestre": 3, "creditos": 1, "tipo_asignatura": "Fund. Obligatoria"},
+    "Bioquímica básica":                    {"semestre": 3, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Bioestadística fundamental":           {"semestre": 3, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Geomática básica":                     {"semestre": 3, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Agroclimatología":                     {"semestre": 4, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Edafología":                           {"semestre": 4, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Fundamentos de ecología":              {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Microbiología":                        {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Biología Celular y Molecular Básica":  {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Diseño de experimentos":               {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Sociología Rural":                     {"semestre": 5, "creditos": 2, "tipo_asignatura": "Disciplinar"},
+    "Riegos y drenajes":                    {"semestre": 5, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Mecanización agrícola":                {"semestre": 5, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Génetica general":                     {"semestre": 5, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
+    "Fisiología vegetal básica":            {"semestre": 5, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Economía agraria":                     {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Entomología":                          {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Fitopatología":                        {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Fisiología de la producción vegetal":  {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Reproducción y multiplicación":      {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Gestión agroempresarial":            {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Manejo de la fertilidad del suelo":  {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Manejo integrado de plagas":         {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Manejo Integrado de Enfermedades":   {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Manejo integrado de malezas":        {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Ciclo i: formulación y evaluación de proyect": {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Fitomejoramiento":                             {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Agroecosistemas y Sistemas de Producción":     {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Tecnología de la Poscosecha":                  {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Ciclo  II: Ejecución de un proyecto productiv":{"semestre": 9, "creditos": 3, "tipo_asignatura": "Disciplinar"},
+    "Práctica Profesional":              {"semestre": 10, "creditos": 6, "tipo_asignatura": "Disciplinar"},
+    "Trabajo de Grado":                  {"semestre": 10, "creditos": 6, "tipo_asignatura": "Disciplinar"}
 }
 
-optativas_produccion = [
-    "Producción de cultivos de clima calido",
-    "Producción de frutales",
-    "Producción de hortalizas",
-    "Producción de ornamentales",
-    "Cultivos perennes industriales",
-    "Producción de papa"
-]
+optativas_produccion = {
+    "Produccion de cultivos de clima calido": {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
+    "Producción de frutales":            {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
+    "Producción de hortalizas":          {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
+    "Producción de ornamentales":        {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
+    "Cultivos perennes industriales":    {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
+    "Producción de papa":                {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
+}
 
 CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica"
 datos = []
@@ -166,8 +202,13 @@ for archivo in os.listdir(CARPETA_PDFS):
                     semestre_malla = ''
                     tipo_asig = 'Libre Elección (L)'
 
-                if nombre_asig in optativas_produccion:
-                    tipo_asig = 'Optativa de producción (C)'
+                info_optativa = optativas_produccion.get(nombre_asig)
+                if info_optativa:
+                    tipo_asig = info_optativa["tipo_asignatura"]
+                    if creditos == '':
+                        creditos = info_optativa["creditos"]
+                    if semestre_malla == '':
+                        semestre_malla = info_optativa["semestre"]
 
                 if creditos == '':
                     print(f"⚠️ Créditos no encontrados para: {nombre_asig} ({codigo})")
@@ -188,6 +229,7 @@ for archivo in os.listdir(CARPETA_PDFS):
                     'semestre_asignatura': semestre
                 })
             j += 1
+
 
 # Exportar a Excel
 df = pd.DataFrame(datos)
