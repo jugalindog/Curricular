@@ -218,7 +218,7 @@ for archivo in os.listdir(CARPETA_PDFS):
                         tipo_asig = detalle
 
                  # Clasificación según la malla curricular
-                semestre_malla = malla_curricular.get(nombre_asig, 'Libre Elección')
+                semestre_malla = malla_curricular.get(nombre_asig, '')
 
                 # Asignación de tipo según nombre exacto
                 if nombre_asig in optativas_produccion:
