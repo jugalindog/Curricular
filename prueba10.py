@@ -1,6 +1,6 @@
 # --- Importación de librerías ---
 import re
-import fitz  # PyMuPDF
+import fitz 
 import pandas as pd
 import os
 
@@ -22,7 +22,11 @@ basura = {
 
 # --- Malla curricular con créditos y tipo ---
 malla_curricular = {
-   "Introducción a la ingeniería agronómica": {"semestre": 1, "creditos": 2, "tipo_asignatura": "Disciplinar"},
+    "Introducción a la ingeniería agronómica": {"semestre": 1, "creditos": 2, "tipo_asignatura": "Disciplinar"},
+    "Inglés I- Semestral"    : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
+    "Inglés II - Semestral"  : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
+    "Inglés III - Semestral"  : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
+    "Inglés IV - Semestral"  : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
     "Matemáticas Básicas":                     {"semestre": 1, "creditos": 3, "tipo_asignatura": "Nivelación"},
     "Biología de plantas":                     {"semestre": 1, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
     "Lecto-Escritura":                         {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
@@ -76,8 +80,64 @@ optativas_produccion = {
     "Producción de papa":                {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
 }
 
-CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica"
-#CARPETA_PDFS = "C:\\Users\\jp2g\\Documents\\PASANTIA\\Curricular\\Curricular\\Historial_Academica"
+asignaturas_extra = {
+    "Agrobiodiversidad":            {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Bioprocesos Agroalimentarios": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Computación estadística":      {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Desarrollo Rural":             {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Emprendimiento e innovación en agronegocios": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Evolución y ecología de patógenos de plantas":{"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Fundamentos de Agroindustria": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Genética de Insectos de Interés económico":   {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Gestión ambiental agropecuaria":              {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Investigación de Mercados":    {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Nutrición Mineral de Plantas": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Producción de cannabis medicinal":            {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Suelos vivos":                 {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
+    "Sistemas Agroalimentarios Vinculo entre ambiente, sociedad y desarrollo": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"}
+}
+# --- Asignaturas de posgrado ---
+asignaturas_posgrado = {
+    "Agroclimatología y cambio climático": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Agua y nutrición mineral": {"codigo": "2019978", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Biología de suelos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Biología molecular": {"codigo": "2019986", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Biología y ecología de malezas": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Clínica de plantas": {"codigo": "2026913", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Decisiones de manejo fitosanitario: aproximación práctica": {"codigo": "2028521", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Degradación química del suelo": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fertilizantes y fertilización": {"codigo": "2019589", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Física de suelos": {"codigo": "2020742", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fisiología avanzada en frutales": {"codigo": "2020001", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fisiología de cultivos": {"codigo": "2028756", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fisiología del desarrollo": {"codigo": "2020004", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fitopatología avanzada": {"codigo": "2020007", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Genética avanzada": {"codigo": "2020009", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Hongos y nemátodos fitopatógenos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Métodos multivariados": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Pedología": {"codigo": "2020745", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Recursos genéticos vegetales": {"codigo": "2020046", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Taxonomía de insectos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Desarrollo económico del territorio rural": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Desarrollo rural y territorios": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Economía de la empresa agraria y alimentaria": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Gestión contable financiera": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Gestión de agroproyectos": {"codigo": "2025414", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Mercadeo agroalimentario y territorial": {"codigo": "2026250", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Problemas agrarios colombianos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Sociedad e instituciones rurales": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Geoestadística": {"codigo": "2020012", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Geomática general": {"codigo": "2020764", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Geoprocesamiento": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Percepción remota": {"codigo": "2020039", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Programación sig": {"codigo": "2027945", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+}
+
+
+
+
+#CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica"
+CARPETA_PDFS = "C:\\Users\\jp2g\\Documents\\PASANTIA\\Curricular\\Curricular\\Historial_Academica"
 datos = []
 
 # --- Procesamiento de PDFs ---
@@ -195,6 +255,7 @@ for archivo in os.listdir(CARPETA_PDFS):
                         tipo_detectado = detalle
 
                 info_malla = malla_curricular.get(nombre_asig)
+                
                 if info_malla:
                     semestre_malla = info_malla["semestre"]
                     if creditos == '':
@@ -211,6 +272,23 @@ for archivo in os.listdir(CARPETA_PDFS):
                         creditos = info_optativa["creditos"]
                     if semestre_malla == '':
                         semestre_malla = info_optativa["semestre"]
+                
+                info_extra = asignaturas_extra.get(nombre_asig)
+                if info_extra:
+                    tipo_asig = info_extra["tipo_asignatura"]
+                    if creditos == '':
+                        creditos = info_extra.get("Creditos", info_extra.get("creditos", 3))
+                    if semestre_malla == '':
+                         semestre_malla = info_extra.get("semestre", None)
+                
+                info_posgrado = asignaturas_posgrado.get(nombre_asig)
+                if info_posgrado:
+                    tipo_asig = info_posgrado["tipo_asignatura"]
+                    if creditos == '':
+                        creditos = info_posgrado.get("Creditos", info_posgrado.get("creditos", 4))
+                    if semestre_malla == '':
+                        semestre_malla = info_posgrado.get("semestre", None)
+
 
                 if creditos == '':
                     print(f"⚠️ Créditos no encontrados para: {nombre_asig} ({codigo})")
