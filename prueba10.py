@@ -363,7 +363,6 @@ for archivo in os.listdir(CARPETA_PDFS):
             elif re.search(r'(.+)\s\((\d{6,7}(?:-B)?)\)$', actual):
                 match_codigo = re.search(r'(.+)\s\((\d{6,7}(?:-B)?)\)$', actual)
                 codigo = match_codigo.group(2)
-                print(codigo)
 
             if match_codigo:
                 nombre_final = match_codigo.group(1).strip()
