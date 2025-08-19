@@ -1,13 +1,36 @@
-# --- Importación de librerías ---
-import re
-import fitz 
-import pandas as pd
-import os
+# -*- coding: utf-8 -*-
+"""
+Script para procesar archivos PDF de historiales académicos de estudiantes.
 
-# --- Claves para identificar encabezados (mueven arriba) ---
+Este script realiza las siguientes tareas:
+1.  Lee todos los archivos PDF de una carpeta especificada.
+2.  Extrae el texto de cada PDF.
+3.  Limpia el texto eliminando encabezados, pies de página y otra información irrelevante.
+4.  Extrae el nombre y el documento de identidad del estudiante.
+5.  Divide el historial en bloques por cada período académico (semestre).
+6.  Reconstruye los nombres de las asignaturas que pueden estar divididos en varias líneas.
+7.  Extrae la información detallada de cada asignatura: código, nombre, nota, estado (aprobada/reprobada),
+    si fue anulada, y los créditos.
+8.  Enriquece los datos de las asignaturas utilizando diccionarios predefinidos (malla curricular,
+    optativas, etc.) para obtener el semestre sugerido en la malla y el tipo de asignatura.
+9.  Almacena toda la información extraída en una lista de diccionarios.
+10. Exporta los datos consolidados a un archivo Excel.
+"""
+
+# --- Importación de librerías ---
+import re           # Para búsquedas y manipulaciones con expresiones regulares
+import fitz         # PyMuPDF: para la extracción de texto desde archivos PDF
+import pandas as pd # Para el manejo de estructuras de datos tabulares (DataFrame)
+import os           # Para interactuar con el sistema de archivos (navegar carpetas)
+
+# --- CONFIGURACIÓN GLOBAL ---
+
+# Palabras clave para identificar líneas de encabezado en las tablas de asignaturas.
+# Ayuda a evitar que estas líneas se confundan con nombres de asignaturas.
 encabezado_claves = ['asignatura', 'créditos', 'hap', 'hai', 'ths', 'tipología', 'calificación', 'anulada', 'n. veces']
 
-# --- Basura a eliminar ---
+# Diccionario con textos genéricos e innecesarios que se encuentran comúnmente en los PDF.
+# Estos textos se eliminarán durante la fase de limpieza.
 basura = {
     0: 'Abreviaturas utilizadas: HAB=Habilitación, VAL=Validación por Pérdida, SUF=Validación por Suficiencia, HAP=Horas de Actividad Presencial, HAI=Horas de Actividad',
     1: 'Independiente, THS=Total Horas Semanales, HOM=Homologada o Convalidada.',
@@ -20,57 +43,201 @@ basura = {
     8: 'Registro y Matrícula'
 }
 
-# --- Malla curricular con créditos y tipo ---
-malla_curricular = {
-    "Introducción a la ingeniería agronómica": {"semestre": 1, "creditos": 2, "tipo_asignatura": "Disciplinar"},
-    "Inglés I- Semestral"    : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
-    "Inglés II - Semestral"  : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
-    "Inglés III - Semestral"  : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
-    "Inglés IV - Semestral"  : {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
-    "Matemáticas Básicas":                     {"semestre": 1, "creditos": 3, "tipo_asignatura": "Nivelación"},
-    "Biología de plantas":                     {"semestre": 1, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Lecto-Escritura":                         {"semestre": 1, "creditos": 2, "tipo_asignatura": "Nivelación"},
-    "Química básica":                          {"semestre": 1, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Cálculo diferencial":                  {"semestre": 1, "creditos": 4, "tipo_asignatura": "Fund. Obligatoria"},
-    "Cálculo Integral":                     {"semestre": 2, "creditos": 4, "tipo_asignatura": "Fund. Obligatoria"},
-    "Fundamentos de mecánica":              {"semestre": 2, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Botánica taxonómica":                  {"semestre": 2, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Laboratorio de química básica":        {"semestre": 2, "creditos": 1, "tipo_asignatura": "Fund. Obligatoria"},
-    "Ciencia del suelo":                    {"semestre": 3, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Laboratorio bioquímica básica":        {"semestre": 3, "creditos": 1, "tipo_asignatura": "Fund. Obligatoria"},
-    "Bioquímica básica":                    {"semestre": 3, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Bioestadística fundamental":           {"semestre": 3, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Geomática básica":                     {"semestre": 3, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Agroclimatología":                     {"semestre": 4, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Edafología":                           {"semestre": 4, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Fundamentos de ecología":              {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Microbiología":                        {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Biología Celular y Molecular Básica":  {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Diseño de experimentos":               {"semestre": 4, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Sociología Rural":                     {"semestre": 5, "creditos": 2, "tipo_asignatura": "Disciplinar"},
-    "Riegos y drenajes":                    {"semestre": 5, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Mecanización agrícola":                {"semestre": 5, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Génetica general":                     {"semestre": 5, "creditos": 3, "tipo_asignatura": "Fund. Obligatoria"},
-    "Fisiología vegetal básica":            {"semestre": 5, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Economía agraria":                     {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Entomología":                          {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Fitopatología":                        {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Fisiología de la producción vegetal":  {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Reproducción y multiplicación":      {"semestre": 6, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Gestión agroempresarial":            {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Manejo de la fertilidad del suelo":  {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Manejo integrado de plagas":         {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Manejo Integrado de Enfermedades":   {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Manejo integrado de malezas":        {"semestre": 7, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Ciclo i: formulación y evaluación de proyect": {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Fitomejoramiento":                             {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Agroecosistemas y Sistemas de Producción":     {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Tecnología de la Poscosecha":                  {"semestre": 8, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Ciclo  II: Ejecución de un proyecto productiv":{"semestre": 9, "creditos": 3, "tipo_asignatura": "Disciplinar"},
-    "Práctica Profesional":              {"semestre": 10, "creditos": 6, "tipo_asignatura": "Disciplinar"},
-    "Trabajo de Grado":                  {"semestre": 10, "creditos": 6, "tipo_asignatura": "Disciplinar"}
-}
+# --- DICCIONARIOS DE ASIGNATURAS (MALLA CURRICULAR) ---
+# Estos diccionarios actúan como una base de datos para enriquecer la información
+# extraída del PDF, como el semestre ideal, los créditos y la tipología de cada asignatura.
 
+# Malla curricular principal: contiene las asignaturas obligatorias y de fundamentación.
+malla_curricular = {'Agroclimatología': {'codigo': '2015880',
+                      'creditos': 3,
+                      'semestre': 4,
+                      'tipo_asignatura': 'Disciplinar'},
+ 'Agroecosistemas y Sistemas de Producción': {'codigo': '2015881',
+                                              'creditos': 3,
+                                              'semestre': 8,
+                                              'tipo_asignatura': 'Disciplinar'},
+ 'Bioestadística fundamental': {'codigo': '1000012-B',
+                                'creditos': 3,
+                                'semestre': 3,
+                                'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Biología Celular y Molecular Básica': {'codigo': '2015882',
+                                         'creditos': 3,
+                                         'semestre': 4,
+                                         'tipo_asignatura': 'Fund. '
+                                                            'Obligatoria'},
+ 'Biología de plantas': {'codigo': '2015877',
+                         'creditos': 3,
+                         'semestre': 1,
+                         'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Bioquímica básica': {'codigo': '1000042-B',
+                       'creditos': 3,
+                       'semestre': 3,
+                       'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Botánica taxonómica': {'codigo': '2015878',
+                         'creditos': 3,
+                         'semestre': 2,
+                         'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Ciclo  II: Ejecución de un proyecto productiv': {'codigo': '2015884',
+                                                   'creditos': 3,
+                                                   'semestre': 9,
+                                                   'tipo_asignatura': 'Disciplinar'},
+ 'Ciclo i: formulación y evaluación de proyect': {'codigo': '2015883',
+                                                  'creditos': 3,
+                                                  'semestre': 8,
+                                                  'tipo_asignatura': 'Disciplinar'},
+ 'Ciencia del suelo': {'codigo': '2015885',
+                       'creditos': 3,
+                       'semestre': 3,
+                       'tipo_asignatura': 'Disciplinar'},
+ 'Cálculo Integral': {'codigo': '1000005-B',
+                      'creditos': 4,
+                      'semestre': 2,
+                      'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Cálculo diferencial': {'codigo': '1000004-B',
+                         'creditos': 4,
+                         'semestre': 1,
+                         'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Diseño de experimentos': {'codigo': '2015887',
+                            'creditos': 3,
+                            'semestre': 4,
+                            'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Economía agraria': {'codigo': '2015888',
+                      'creditos': 3,
+                      'semestre': 6,
+                      'tipo_asignatura': 'Disciplinar'},
+ 'Edafología': {'codigo': '2015889',
+                'creditos': 3,
+                'semestre': 4,
+                'tipo_asignatura': 'Disciplinar'},
+ 'Entomología': {'codigo': '2015890',
+                 'creditos': 3,
+                 'semestre': 6,
+                 'tipo_asignatura': 'Disciplinar'},
+ 'Fisiología de la producción vegetal': {'codigo': '2015891',
+                                         'creditos': 3,
+                                         'semestre': 6,
+                                         'tipo_asignatura': 'Disciplinar'},
+ 'Fisiología vegetal básica': {'codigo': '2015892',
+                               'creditos': 3,
+                               'semestre': 5,
+                               'tipo_asignatura': 'Disciplinar'},
+ 'Fitomejoramiento': {'codigo': '2015893',
+                      'creditos': 3,
+                      'semestre': 8,
+                      'tipo_asignatura': 'Disciplinar'},
+ 'Fitopatología': {'codigo': '2015894',
+                   'creditos': 3,
+                   'semestre': 6,
+                   'tipo_asignatura': 'Disciplinar'},
+ 'Fundamentos de ecología': {'codigo': '1000011-B',
+                             'creditos': 3,
+                             'semestre': 4,
+                             'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Fundamentos de mecánica': {'codigo': '1000019-B',
+                             'creditos': 3,
+                             'semestre': 2,
+                             'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Geomática básica': {'codigo': '2015896',
+                      'creditos': 3,
+                      'semestre': 3,
+                      'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Gestión agroempresarial': {'codigo': '2015922',
+                             'creditos': 3,
+                             'semestre': 7,
+                             'tipo_asignatura': 'Disciplinar'},
+ 'Génetica general': {'codigo': '2015895',
+                      'creditos': 3,
+                      'semestre': 5,
+                      'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Inglés I- Semestral': {'codigo': '1000044-B',
+                         'creditos': 2,
+                         'semestre': 1,
+                         'tipo_asignatura': 'Nivelación'},
+ 'Inglés II - Semestral': {'codigo': '1000045-B',
+                           'creditos': 2,
+                           'semestre': 2,
+                           'tipo_asignatura': 'Nivelación'},
+ 'Inglés III - Semestral': {'codigo': '1000046-B',
+                            'creditos': 2,
+                            'semestre': 3,
+                            'tipo_asignatura': 'Nivelación'},
+ 'Inglés IV - Semestral': {'creditos': 2,
+                           'semestre': 4,
+                           'tipo_asignatura': 'Nivelación'},
+ 'Introducción a la ingeniería agronómica': {'codigo': '2015897',
+                                             'creditos': 2,
+                                             'semestre': 1,
+                                             'tipo_asignatura': 'Disciplinar'},
+ 'Laboratorio bioquímica básica': {'codigo': '1000043-B',
+                                   'creditos': 1,
+                                   'semestre': 3,
+                                   'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Laboratorio de química básica': {'codigo': '2015782',
+                                   'creditos': 1,
+                                   'semestre': 2,
+                                   'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Lecto-Escritura': {'codigo': '1000002-B',
+                     'creditos': 2,
+                     'semestre': 1,
+                     'tipo_asignatura': 'Nivelación'},
+ 'Manejo Integrado de Enfermedades': {'codigo': '2015899',
+                                      'creditos': 3,
+                                      'semestre': 7,
+                                      'tipo_asignatura': 'Disciplinar'},
+ 'Manejo de la fertilidad del suelo': {'codigo': '2015898',
+                                       'creditos': 3,
+                                       'semestre': 7,
+                                       'tipo_asignatura': 'Disciplinar'},
+ 'Manejo integrado de malezas': {'codigo': '2015900',
+                                 'creditos': 3,
+                                 'semestre': 7,
+                                 'tipo_asignatura': 'Disciplinar'},
+ 'Manejo integrado de plagas': {'codigo': '2015901',
+                                'creditos': 3,
+                                'semestre': 7,
+                                'tipo_asignatura': 'Disciplinar'},
+ 'Matemáticas Básicas': {'codigo': '1000001-B',
+                         'creditos': 3,
+                         'semestre': 1,
+                         'tipo_asignatura': 'Nivelación'},
+ 'Mecanización agrícola': {'codigo': '2015902',
+                           'creditos': 3,
+                           'semestre': 5,
+                           'tipo_asignatura': 'Disciplinar'},
+ 'Microbiología': {'codigo': '2015903',
+                   'creditos': 3,
+                   'semestre': 4,
+                   'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Práctica Profesional': {'codigo': '2015934',
+                          'creditos': 6,
+                          'semestre': 10,
+                          'tipo_asignatura': 'Disciplinar'},
+ 'Química básica': {'codigo': '1000041-B',
+                    'creditos': 3,
+                    'semestre': 1,
+                    'tipo_asignatura': 'Fund. Obligatoria'},
+ 'Reproducción y multiplicación': {'codigo': '2015907',
+                                   'creditos': 3,
+                                   'semestre': 6,
+                                   'tipo_asignatura': 'Disciplinar'},
+ 'Riegos y drenajes': {'codigo': '2015908',
+                       'creditos': 3,
+                       'semestre': 5,
+                       'tipo_asignatura': 'Disciplinar'},
+ 'Sociología Rural': {'codigo': '2015909',
+                      'creditos': 2,
+                      'semestre': 5,
+                      'tipo_asignatura': 'Disciplinar'},
+ 'Tecnología de la Poscosecha': {'codigo': '2015910',
+                                 'creditos': 3,
+                                 'semestre': 8,
+                                 'tipo_asignatura': 'Disciplinar'},
+ 'Trabajo de Grado': {'codigo': '2015291',
+                      'creditos': 6,
+                      'semestre': 10,
+                      'tipo_asignatura': 'Disciplinar'}}
+
+# Asignaturas optativas de producción.
 optativas_produccion = {
     "Produccion de cultivos de clima calido": {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
     "Producción de frutales":            {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
@@ -80,6 +247,7 @@ optativas_produccion = {
     "Producción de papa":                {"semestre": 9, "creditos": 3, "tipo_asignatura": "Optativa de Producción"},
 }
 
+# Asignaturas extra o de libre elección comunes.
 asignaturas_extra = {
     "Agrobiodiversidad":            {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
     "Bioprocesos Agroalimentarios": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
@@ -96,41 +264,42 @@ asignaturas_extra = {
     "Suelos vivos":                 {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
     "Sistemas Agroalimentarios Vinculo entre ambiente, sociedad y desarrollo": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"}
 }
-# --- Asignaturas de posgrado ---
+
+# Asignaturas de posgrado que pueden ser tomadas por estudiantes de pregrado.
 asignaturas_posgrado = {
     "Agroclimatología y cambio climático": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Agua y nutrición mineral": {"codigo": "2019978", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Biología de suelos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Biología molecular": {"codigo": "2019986", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Biología y ecología de malezas": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Clínica de plantas": {"codigo": "2026913", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Agua y nutrición mineral":            {"codigo": "2019978", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Biología de suelos":                  {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Biología molecular":                  {"codigo": "2019986", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Biología y ecología de malezas":      {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Clínica de plantas":                  {"codigo": "2026913", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
     "Decisiones de manejo fitosanitario: aproximación práctica": {"codigo": "2028521", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Degradación química del suelo": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Fertilizantes y fertilización": {"codigo": "2019589", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Física de suelos": {"codigo": "2020742", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Degradación química del suelo":       {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fertilizantes y fertilización":       {"codigo": "2019589", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Física de suelos":                    {"codigo": "2020742", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
     "Fisiología avanzada en frutales": {"codigo": "2020001", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Fisiología de cultivos": {"codigo": "2028756", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Fisiología del desarrollo": {"codigo": "2020004", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Fitopatología avanzada": {"codigo": "2020007", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Genética avanzada": {"codigo": "2020009", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fisiología de cultivos":          {"codigo": "2028756", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fisiología del desarrollo":       {"codigo": "2020004", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Fitopatología avanzada":          {"codigo": "2020007", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Genética avanzada":               {"codigo": "2020009", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
     "Hongos y nemátodos fitopatógenos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Métodos multivariados": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Pedología": {"codigo": "2020745", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Recursos genéticos vegetales": {"codigo": "2020046", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Taxonomía de insectos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Métodos multivariados":           {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Pedología":                       {"codigo": "2020745", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Recursos genéticos vegetales":    {"codigo": "2020046", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Taxonomía de insectos":           {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
     "Desarrollo económico del territorio rural": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Desarrollo rural y territorios": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Desarrollo rural y territorios":  {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
     "Economía de la empresa agraria y alimentaria": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Gestión contable financiera": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Gestión de agroproyectos": {"codigo": "2025414", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Gestión contable financiera":     {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Gestión de agroproyectos":        {"codigo": "2025414", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
     "Mercadeo agroalimentario y territorial": {"codigo": "2026250", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Problemas agrarios colombianos": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Problemas agrarios colombianos":  {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
     "Sociedad e instituciones rurales": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Geoestadística": {"codigo": "2020012", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Geomática general": {"codigo": "2020764", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Geoprocesamiento": {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Percepción remota": {"codigo": "2020039", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
-    "Programación sig": {"codigo": "2027945", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Geoestadística":                 {"codigo": "2020012", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Geomática general":              {"codigo": "2020764", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Geoprocesamiento":               {"codigo": None, "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Percepción remota":              {"codigo": "2020039", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
+    "Programación sig":               {"codigo": "2027945", "semestre": None, "Creditos": 4, "tipo_asignatura": "Posgrado"},
 }
 
 
@@ -194,6 +363,7 @@ for archivo in os.listdir(CARPETA_PDFS):
             elif re.search(r'(.+)\s\((\d{6,7}(?:-B)?)\)$', actual):
                 match_codigo = re.search(r'(.+)\s\((\d{6,7}(?:-B)?)\)$', actual)
                 codigo = match_codigo.group(2)
+                print(codigo)
 
             if match_codigo:
                 nombre_final = match_codigo.group(1).strip()
@@ -314,4 +484,4 @@ for archivo in os.listdir(CARPETA_PDFS):
 # Exportar a Excel
 df = pd.DataFrame(datos)
 df.to_excel("Prueba10_con_creditos.xlsx", index=False)
-print("✅ Archivo generado correctamente.")
+print("Archivo generado correctamente.")
