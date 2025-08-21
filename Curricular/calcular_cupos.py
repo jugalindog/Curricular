@@ -5,7 +5,8 @@ from prerequisitos_corregido import prerequisitos
 from prueba10 import malla_curricular # Importar para acceder a los códigos
 
 # --- Rutas ---
-RUTA_ESTUDIANTES = r"C:\Users\jp2g\Documents\PASANTIA\Curricular\Curricular\Estudiantes_simulados.xlsx"
+RUTA_ESTUDIANTES = "/home/jugalindog/Pasantia/Curricular/Curricular/Estudiantes_simulados.xlsx"
+#RUTA_ESTUDIANTES = r"C:\Users\jp2g\Documents\PASANTIA\Curricular\Curricular\Estudiantes_simulados.xlsx"
 #RUTA_ESTUDIANTES = r"C:\Users\jp2g\Documents\PASANTIA\Curricular\Curricular\Prueba10_con_creditos.xlsx"
 def normalize_name(name):
     """Convierte a minúsculas, quita espacios y acentos."""
