@@ -1,0 +1,35 @@
+[33mbb49156[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m cambios
+[33mbbb232c[m[33m ([m[1;31morigin/master[m[33m)[m correcciones
+A	Prueba10_con_creditos.xlsx
+[33madd286d[m Actualziar codigo para calculo de cupos.
+A	Curricular
+[33m8a93585[m Adaptacion para eleccion de comparacion por codigo o nombre de materia
+M	Prueba10_con_creditos.xlsx
+M	__pycache__/prerequisitos_corregido.cpython-313.pyc
+M	__pycache__/prueba10.cpython-313.pyc
+M	calcular_cupos.py
+M	prerequisitos_corregido.py
+M	prueba10.py
+[33mfdb7ef3[m Agregacion de Prerequisitos, calculo de cupos, adaptacion para coioncidencia por nombre o por codigo de asignatura
+A	Estudiantes_simulados.xlsx
+A	Malla_Curricular.pdf
+A	Prerequisitos.py
+M	Promedios_DB.xlsx
+M	Prueba10_con_creditos.xlsx
+A	__pycache__/Prerequisitos.cpython-313.pyc
+A	__pycache__/prerequisitos_corregido.cpython-313.pyc
+A	__pycache__/prueba10.cpython-313.pyc
+A	calcular_cupos.py
+A	prerequisitos_corregido.py
+M	prueba10.py
+A	temp_get_codes.py
+A	update_excel_codes.py
+A	update_malla.py
+A	update_prerequisitos.py
+[33m67d853a[m agregar electivas y materias deposgrados
+R100	Historial_Academica/HA - Agricola - Julian F. Lancheros.pdf	Curricular/HA - Agricola - Julian F. Lancheros.pdf
+M	Prueba10_con_creditos.xlsx
+M	prueba10.py
+[33m16e9b95[m eliminar temporales
+D	.~lock.Promedios_DB.xlsx#
+D	.~lock.Prueba10_con_creditos.xlsx#
