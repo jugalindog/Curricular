@@ -250,6 +250,7 @@ optativas_produccion = {
 
 # Asignaturas extra o de libre elección comunes.
 asignaturas_extra = {
+    "Agroecología":                 {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
     "Agrobiodiversidad":            {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
     "Bioprocesos Agroalimentarios": {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
     "Computación estadística":      {"semestre": None, "Creditos": 3, "tipo_asignatura": "Libre Elección"},
