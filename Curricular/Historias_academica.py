@@ -310,8 +310,8 @@ asignaturas_posgrado = {
 
 
 
-#CARPETA_PDFS = "/home/jugalindog/Documents/Historias academicas/activos"
-CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
+CARPETA_PDFS = "/home/jugalindog/Documents/Historias academicas/activos"
+#CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
                 
 datos = []
 
@@ -417,7 +417,7 @@ for archivo in os.listdir(CARPETA_PDFS):
                         break
                     detalles.append(siguiente)
                     j += 1
-                print(siguiente)    
+                
 #                print(detalles)
                 for detalle in detalles:
                     if re.search(r'(Aprobada|Reprobada|SI\*)', detalle):

@@ -8,8 +8,8 @@ from prerequisitos_corregido import prerequisitos
 from Historias_academica import malla_curricular 
 
 # --- RUTAS ---
-RUTA_ESTUDIANTES = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Historias_academicas.xlsx"
-# RUTA_ESTUDIANTES = "Historias_academicas.xlsx" # Úsala si está en la misma carpeta
+#RUTA_ESTUDIANTES = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Historias_academicas.xlsx"
+RUTA_ESTUDIANTES ="/home/jugalindog/Pasantia/Curricular/Curricular/Historias_academicas.xlsx"
 
 def normalize_name(name):
     """Convierte a minúsculas, quita espacios y acentos."""

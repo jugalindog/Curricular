@@ -13,7 +13,7 @@ from selenium.common.exceptions import StaleElementReferenceException, TimeoutEx
 # ================= CONFIGURACIÓN ROBUSTA =================
 
 # 1. Rutas
-ARCHIVO_EXCEL = '/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica/activos/listado.xlsx'
+ARCHIVO_EXCEL = '/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica/activos/listado (Copy).xlsx'
 NOMBRE_COLUMNA = 'Documento'
 CARPETA_DESCARGA = "/home/jugalindog/Documents/Historias academicas/activos"
 
