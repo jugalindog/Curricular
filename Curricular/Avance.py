@@ -13,8 +13,8 @@ except ImportError:
 CREDITOS_TOTALES_180 = 180   # Hacia grado (sin nivelación)
 
 # --- Rutas ---
-RUTA_ARCHIVO = r"C:\Users\jp2g\Documents\PASANTIA\Curricular\Curricular\Estudiantes_simulados.xlsx"
-RUTA_SALIDA  = r"C:\Users\jp2g\Documents\PASANTIA\Curricular\Curricular\Avance_y_Proyeccion_Estudiantes.xlsx"
+RUTA_ARCHIVO = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Historias_academicas.xlsx"
+RUTA_SALIDA  = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Avance_y_Proyeccion_Estudiantes.xlsx"
 
 def normalize_name(name: str) -> str:
     """Convierte un string a minúsculas, quita espacios extra y acentos."""

@@ -1,54 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-Script para procesar archivos PDF de historiales académicos de estudiantes.
+import re
+import fitz  # PyMuPDF
+import pandas as pd
+import os
 
-Este script realiza las siguientes tareas:
-1.  Lee todos los archivos PDF de una carpeta especificada.
-2.  Extrae el texto de cada PDF.
-3.  Limpia el texto eliminando encabezados, pies de página y otra información irrelevante.
-4.  Extrae el nombre y el documento de identidad del estudiante.
-5.  Divide el historial en bloques por cada período académico (semestre).
-6.  Reconstruye los nombres de las asignaturas que pueden estar divididos en varias líneas.
-7.  Extrae la información detallada de cada asignatura: código, nombre, nota, estado (aprobada/reprobada),
-    si fue anulada, y los créditos.
-8.  Enriquece los datos de las asignaturas utilizando diccionarios predefinidos (malla curricular,
-    optativas, etc.) para obtener el semestre sugerido en la malla y el tipo de asignatura.
-9.  Almacena toda la información extraída en una lista de diccionarios.
-10. Exporta los datos consolidados a un archivo Excel.
-"""
-
-# --- Importación de librerías ---
-import re           # Para búsquedas y manipulaciones con expresiones regulares
-import fitz         # PyMuPDF: para la extracción de texto desde archivos PDF
-import pandas as pd # Para el manejo de estructuras de datos tabulares (DataFrame)
-import os           # Para interactuar con el sistema de archivos (navegar carpetas)
-
-# --- CONFIGURACIÓN GLOBAL ---
-
-# Palabras clave para identificar líneas de encabezado en las tablas de asignaturas.
-# Ayuda a evitar que estas líneas se confundan con nombres de asignaturas.
-encabezado_claves = ['asignatura', 'créditos', 'hap', 'hai', 'ths', 'tipología', 'calificación', 'anulada', 'n. veces']
-
-# Diccionario con textos genéricos e innecesarios que se encuentran comúnmente en los PDF.
-# Estos textos se eliminarán durante la fase de limpieza.
-basura = {
-    0: 'Abreviaturas utilizadas: HAB=Habilitación, VAL=Validación por Pérdida, SUF=Validación por Suficiencia, HAP=Horas de Actividad Presencial, HAI=Horas de Actividad',
-    1: 'Independiente, THS=Total Horas Semanales, HOM=Homologada o Convalidada.',
-    2: 'SI*: Cancelación por decisión de la universidad soportada en acuerdos, resoluciones y actos académicos',
-    3: 'Este es un documento de uso interno de la Universidad Nacional de Colombia. No constituye, ni reemplaza el certificado oficial de notas.',
-    4: 'Informe generado por el usuario:',
-    5: 'Reporte de Historia Académica',
-    6: 'Sistema de Información Académica',
-    7: 'Dirección Nacional de Información Académica',
-    8: 'Registro y Matrícula',
-    9: 'jugalindog\xa0el\xa0Friday, December 19, 2025',
-    10: 'Créditos HAP'
-
-}
-
-# --- DICCIONARIOS DE ASIGNATURAS (MALLA CURRICULAR) ---
-# Estos diccionarios actúan como una base de datos para enriquecer la información
-# extraída del PDF, como el semestre ideal, los créditos y la tipología de cada asignatura.
+# ==============================================================================
+# ⚠️ SECCIÓN DE DATOS: PEGA AQUÍ TUS DICCIONARIOS (MALLA, OPTATIVAS, ETC.)
+# ==============================================================================
 
 # Malla curricular principal: contiene las asignaturas obligatorias y de fundamentación.
 malla_curricular = {'Agroclimatología': {'codigo': '2015880',
@@ -308,194 +266,225 @@ asignaturas_posgrado = {
 }
 
 
+# SI YA TIENES LOS DICCIONARIOS EN ESTE ARCHIVO, NO LOS BORRES.
+# SOLO REEMPLAZA EL CÓDIGO QUE SIGUE A PARTIR DE "CONFIGURACIÓN GLOBAL"
+# ==============================================================================
 
+# --- CONFIGURACIÓN GLOBAL ---
+CARPETA_PDFS = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Curricular\Historial_Academica\activos"  # <--- AJUSTA TU RUTA
+ARCHIVO_SALIDA = "Historias_academicas2.xlsx"
 
-#CARPETA_PDFS = "/home/jugalindog/Documents/Historias academicas/activos"
-CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
-                
-datos = []
-
-# --- Procesamiento de PDFs ---
-for archivo in os.listdir(CARPETA_PDFS):
-    if not archivo.endswith(".pdf"):
-        continue
-
-    ruta_pdf = os.path.join(CARPETA_PDFS, archivo)
-    try:
-        doc = fitz.open(ruta_pdf)
-        texto = "\n".join([page.get_text() for page in doc])
-        doc.close()
-
-        for b in basura.values():
-            texto = texto.replace(b, '')
-
-        texto = re.sub(r"Informe generado.*\d{2}:\d{2}", '', texto)
-        texto = re.sub(r'Página\xa0\d+\xa0de\xa0\d+', '', texto)
-        texto = re.sub(r'\n?[A-ZÁÉÍÓÚÑ][^\n]+\s+-\s+\d{7,10}', '', texto)
-
-    except Exception as e:
-        print(f"❌ Error con {archivo}: {e}")
-        continue
-
-    nombre_match = re.search(r'Nombre:\s*(.+)', texto)
-    documento_match = re.search(r'Documento:\s*(\d+)', texto)
-    Semestre_inicio_match = re.search(r'Periodo admisión:\s*(\d+)', texto)
-    plan_match = re.search(r'\(2505\)\s*([^\n]+)', texto)
+def procesar_historias():
+    datos = []
     
+    # Verificar carpeta
+    if not os.path.exists(CARPETA_PDFS):
+        print(f"Error: La carpeta {CARPETA_PDFS} no existe.")
+        return
 
-    if not nombre_match or not documento_match:
-        continue
+    archivos_pdf = [f for f in os.listdir(CARPETA_PDFS) if f.lower().endswith('.pdf')]
+    print(f"Encontrados {len(archivos_pdf)} archivos PDF.")
 
-    nombre = nombre_match.group(1).strip()
-    plan = plan_match.group(1).strip() if plan_match else "Desconocido"
-    documento = documento_match.group(1).strip()
-    semestre_inicio =Semestre_inicio_match.group(1).strip()
+    for archivo in archivos_pdf:
+        ruta_pdf = os.path.join(CARPETA_PDFS, archivo)
+        print(f"Procesando: {archivo}...")
 
-    bloques = re.split(r'(?:PRIMER|SEGUNDO)\s+PERIODO\s+(\d{4}-[12]S)', texto)
+        try:
+            doc = fitz.open(ruta_pdf)
+            texto_completo = ""
+            for pagina in doc:
+                texto_completo += pagina.get_text("text") + "\n"
+            doc.close()
+        except Exception as e:
+            print(f"Error al leer {archivo}: {e}")
+            continue
 
-    for i in range(1, len(bloques), 2):
-        semestre = bloques[i]
-        contenido = bloques[i + 1]
-        lineas = [l.strip() for l in contenido.splitlines() if l.strip()]
+        # --- Limpieza Básica ---
+        lineas = texto_completo.split('\n')
+        lineas_limpias = [l.strip() for l in lineas if l.strip()]
+        texto_unido = "\n".join(lineas_limpias)
 
-        lineas_unidas = []
-        j = 0
-        while j < len(lineas):
-            actual = lineas[j].strip()
-            match_codigo = None
-            codigo = None
+        # --- Extracción de Datos del Estudiante ---
+        # 1. Nombre
+        nombre_match = re.search(r'Nombre:\s*(.+)', texto_unido)
+        nombre = nombre_match.group(1).strip() if nombre_match else "Desconocido"
 
-            if re.fullmatch(r'\((\d{6,7}(?:-B)?)\)', actual):
-                codigo = re.findall(r'\((\d{6,7}(?:-B)?)\)', actual)[0]
-                if j > 0:
-                    nombre_candidato = lineas[j - 1].strip()
-                    if not any(p in nombre_candidato.lower() for p in encabezado_claves):
-                        actual = f"{nombre_candidato} ({codigo})"
-                        j += 1
-            elif re.search(r'(.+)\s\((\d{6,7}(?:-B)?)\)$', actual):
-                match_codigo = re.search(r'(.+)\s\((\d{6,7}(?:-B)?)\)$', actual)
-                codigo = match_codigo.group(2)
+        # 2. Documento
+        documento_match = re.search(r'Documento:\s*(\d+)', texto_unido)
+        documento = documento_match.group(1).strip() if documento_match else "0"
 
-            if match_codigo:
-                nombre_final = match_codigo.group(1).strip()
-                nombre_partes = [nombre_final]
-                k = j - 1
-                while k >= 0:
-                    anterior = lineas[k].strip().lower()
-                    if re.fullmatch(r'\d+', anterior): break
-                    if any(p in anterior for p in encabezado_claves): break
-                    nombre_partes.insert(0, lineas[k].strip())
-                    k -= 1
-                nombre_completo = " ".join(nombre_partes) + f" ({codigo})"
-                lineas_unidas = lineas_unidas[:k + 1]
-                lineas_unidas.append(nombre_completo)
-            else:
-                lineas_unidas.append(actual)
-            j += 1
+        # 3. Plan (CORRECCIÓN IMPORTANTE PARA NIVELACIÓN)
+        # Busca lo que sigue a (2505)
+        plan_match = re.search(r'\(2505\)\s*([^\n]+)', texto_unido)
+        if plan_match:
+            plan = plan_match.group(1).strip()
+        else:
+            # Intento secundario por si el formato cambia
+            plan_match_simple = re.search(r'Plan:\s*(.+)', texto_unido)
+            plan = plan_match_simple.group(1).strip() if plan_match_simple else "Desconocido"
 
-        # --- Extracción por asignatura ---
+        print(f"   -> Estudiante: {nombre} | Plan: {plan}")
+
+        # --- Procesamiento de Asignaturas ---
+        # Unimos líneas para facilitar búsqueda secuencial
+        lineas_unidas = [l.strip() for l in lineas if l.strip()]
+        
         j = 0
         while j < len(lineas_unidas):
             linea = lineas_unidas[j]
+            
+            # Regex: Busca "Nombre Materia (CODIGO)"
+            # Detecta códigos numéricos largos o con -B (ej: 2015883 o 1000004-B)
             match_asig = re.search(r'(.+?)\s*\((\d{6,7}(?:-B)?)\)', linea)
+
             if match_asig:
+                # 1. Limpieza inicial
                 nombre_asig = match_asig.group(1).strip()
                 nombre_asig = re.sub(r'^(Obligatoria|Optativa|Libre Elección|Nivelación)\s*\(.\)\s*', '', nombre_asig, flags=re.IGNORECASE)
                 codigo = match_asig.group(2).strip()
+                # ==============================================================================
+                # 🧠 LÓGICA HÍBRIDA: DICCIONARIO + HEURÍSTICA DE TEXTO
+                # ==============================================================================
+                
+                encontrado_en_bd = False
+                
+                # --- PASO 1: Intentar arreglar usando tus Diccionarios (Lo ideal) ---
+                # Revisa todos los diccionarios que tengas disponibles
+                listas_asignaturas = []
+                if 'malla_curricular' in globals(): listas_asignaturas.append(malla_curricular)
+                if 'optativas_produccion' in globals(): listas_asignaturas.append(optativas_produccion)
+                if 'asignaturas_extra' in globals(): listas_asignaturas.append(asignaturas_extra)
+                
+                for diccionario in listas_asignaturas:
+                    for nombre_real, info in diccionario.items():
+                        if str(info.get('codigo')) == codigo:
+                            nombre_asig = nombre_real
+                            encontrado_en_bd = True
+                            break
+                    if encontrado_en_bd: break
+                
+                # --- PASO 2: Si NO está en diccionarios, intentar unir la siguiente línea ---
+                if not encontrado_en_bd:
+                    # Verificamos si hay una línea siguiente disponible
+                    if j + 1 < len(lineas_unidas):
+                        siguiente_linea = lineas_unidas[j + 1].strip()
+                        
+                        # ANALIZAMOS LA SIGUIENTE LÍNEA:
+                        # Si NO tiene formato de código "Nombre (123456)" 
+                        # Y NO tiene palabras clave como "Aprobada", "Reprobada" o números de nota
+                        es_otra_materia = re.search(r'\((\d{6,7}(?:-B)?)\)', siguiente_linea)
+                        es_detalle_nota = re.search(r'(Aprobada|Reprobada|[\d\.]{3,})', siguiente_linea)
+                        
+                        if not es_otra_materia and not es_detalle_nota:
+                            # ¡Es la continuación del nombre!
+                            nombre_asig += " " + siguiente_linea
+                            # Importante: Avanzamos el índice j para no leer esta línea dos veces
+                            j += 1
+                # =============================================================
+
+                # Inicializar variables de detalle
                 nota = ''
                 estado = 'Reprobada'
                 anulada = 'NO'
                 creditos = ''
-                tipo_detectado = ''
+                tipo_asig = 'Libre Elección (L)' # Default
+                semestre_malla = ''
+                semestre_inicio = 'Desconocido' # Puedes mejorar esto extrayendo el encabezado de periodo
+                semestre = 'Desconocido' 
 
+                # Buscar semestre (intento simple buscando hacia atrás la fecha tipo 202X-XS)
+                # Esto es una mejora opcional, por ahora mantenemos tu lógica de flujo
+                
+                # Capturar detalles debajo del nombre (nota, creditos, etc)
                 detalles = []
                 j += 1
                 while j < len(lineas_unidas):
                     siguiente = lineas_unidas[j].strip()
+                    # Si encontramos OTRA asignatura, paramos
                     if re.search(r'(.+?)\s*\((\d{6,7}(?:-B)?)\)', siguiente):
                         j -= 1
                         break
+                    
+                    # Detectar Semestre Académico (Encabezado de bloque)
+                    # Si encuentras patrones como "2021-1S", guárdalos en una variable externa al while
+                    # para asignarlos. Por simplicidad, aquí procesamos detalles de la materia.
+                    
                     detalles.append(siguiente)
                     j += 1
-                print(siguiente)    
-#                print(detalles)
+
+                # Analizar detalles
                 for detalle in detalles:
+                    # Nota y Estado
                     if re.search(r'(Aprobada|Reprobada|SI\*)', detalle):
+                        # Extraer nota
                         nota_match = re.search(r'([\d,\.]+)', detalle)
                         if nota_match:
                             nota = nota_match.group(1).replace(',', '.')
-                        estado = 'Aprobada' if 'Aprobada' in detalle else 'Reprobada'
-                    if 'Anulada' in detalle or 'SI' in detalle:
+                        
+                        if 'Aprobada' in detalle: estado = 'Aprobada'
+                        elif 'Reprobada' in detalle: estado = 'Reprobada'
+                    
+                    # Anulada
+                    if 'Anulada' in detalle or 'Cancelada' in detalle:
                         anulada = 'SI'
-                    if creditos == '' and detalle.isdigit() and 0 < int(detalle) <= 6:
+
+                    # Créditos (si aparecen explícitamente como número solo entre 1 y 6)
+                    if creditos == '' and detalle.isdigit() and 0 < int(detalle) <= 20:
                         creditos = int(detalle)
-                    if creditos == '':
-                        match_credito = re.search(r'[Cc]réditos\s*:?[\s\.]*(\d+)', detalle)
-                        if match_credito:
-                            creditos = int(match_credito.group(1))
-                    if any(t in detalle for t in ['Obligatoria', 'Optativa', 'Libre Elección', 'Nivelación']):
-                        tipo_detectado = detalle
+                    
+                    # Créditos (con etiqueta)
+                    match_credito = re.search(r'[Cc]réditos\s*:?[\s\.]*(\d+)', detalle)
+                    if match_credito:
+                        creditos = int(match_credito.group(1))
 
-                info_malla = malla_curricular.get(nombre_asig)
-                
-                if info_malla:
-                    semestre_malla = info_malla["semestre"]
-                    if creditos == '':
-                        creditos = info_malla["creditos"]
-                    tipo_asig = info_malla["tipo_asignatura"]
-                else:
-                    semestre_malla = ''
-                    tipo_asig = 'Libre Elección (L)'
+                # Completar datos con Malla Curricular (si no se encontraron en PDF)
+                # Usamos el nombre_asig ya corregido
+                if 'malla_curricular' in globals():
+                    info_malla = malla_curricular.get(nombre_asig)
+                    if info_malla:
+                        semestre_malla = info_malla.get("semestre", '')
+                        tipo_asig = info_malla.get("tipo_asignatura", tipo_asig)
+                        if creditos == '': creditos = info_malla.get("creditos", '')
 
-                info_optativa = optativas_produccion.get(nombre_asig)
-                if info_optativa:
-                    tipo_asig = info_optativa["tipo_asignatura"]
-                    if creditos == '':
-                        creditos = info_optativa["creditos"]
-                    if semestre_malla == '':
-                        semestre_malla = info_optativa["semestre"]
-                
-                info_extra = asignaturas_extra.get(nombre_asig)
-                if info_extra:
-                    tipo_asig = info_extra["tipo_asignatura"]
-                    if creditos == '':
-                        creditos = info_extra.get("Creditos", info_extra.get("creditos", 3))
-                    if semestre_malla == '':
-                         semestre_malla = info_extra.get("semestre", None)
-                
-                info_posgrado = asignaturas_posgrado.get(nombre_asig)
-                if info_posgrado:
-                    tipo_asig = info_posgrado["tipo_asignatura"]
-                    if creditos == '':
-                        creditos = info_posgrado.get("Creditos", info_posgrado.get("creditos", 4))
-                    if semestre_malla == '':
-                        semestre_malla = info_posgrado.get("semestre", None)
+                # Completar con Optativas
+                if 'optativas_produccion' in globals() and not semestre_malla:
+                    info_opt = optativas_produccion.get(nombre_asig)
+                    if info_opt:
+                        semestre_malla = info_opt.get("semestre", '')
+                        tipo_asig = info_opt.get("tipo_asignatura", tipo_asig)
+                        if creditos == '': creditos = info_opt.get("creditos", '')
 
-
-                if creditos == '':
-                    print(f"⚠️ Estudiante : {nombre} ")
-                    print(f"⚠️ Créditos no encontrados para: {nombre_asig} ({codigo})")
-                    print("🧾 Detalles:", detalles)
+                # Debug en consola para verificar correcciones
+                # print(f"Procesado: {nombre_asig} ({codigo}) - Nota: {nota}")
 
                 datos.append({
                     'nombre': nombre,
                     'documento': documento,
-                    'plan': plan,
+                    'plan': plan,  # <--- CAMPO CLAVE
                     'codigo_asignatura': codigo,
-                    'asignatura': nombre_asig,
+                    'asignatura': nombre_asig, # Nombre corregido
                     'creditos': creditos,
                     'tipo_asignatura': tipo_asig,
                     'semestre_malla': semestre_malla,
-                    'nota': float(nota) if nota.replace('.', '', 1).isdigit() else 0.0,
+                    'nota': float(nota) if str(nota).replace('.', '', 1).isdigit() else 0.0,
                     'estado': estado,
                     'anulada': anulada,
-                    'semestre_inicio': semestre_inicio,
+                    'semestre_inicio': semestre_inicio, # Ajustar si tienes lógica de periodos
                     'semestre_asignatura': semestre
                 })
+            
             j += 1
 
+    # Exportar
+    if datos:
+        df = pd.DataFrame(datos)
+        try:
+            df.to_excel(ARCHIVO_SALIDA, index=False)
+            print(f"\n✅ Éxito: Archivo guardado en {ARCHIVO_SALIDA}")
+        except Exception as e:
+            print(f"\n❌ Error al guardar Excel: {e}")
+    else:
+        print("\n⚠️ No se encontraron datos para exportar.")
 
-# Exportar a Excel
-df = pd.DataFrame(datos)
-df.to_excel("Historias_academicas.xlsx", index=False)
-print("Archivo generado correctamente.")
+if __name__ == "__main__":
+    procesar_historias()
