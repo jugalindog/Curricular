@@ -41,7 +41,7 @@ basura = {
     6: 'Sistema de Información Académica',
     7: 'Dirección Nacional de Información Académica',
     8: 'Registro y Matrícula',
-    9: 'jugalindog\xa0el\xa0Friday, December 19, 2025',
+    9: 'jugalindog el Friday, December 19, 2025',
     10: 'Créditos HAP'
 
 }
@@ -66,8 +66,7 @@ malla_curricular = {'Agroclimatología': {'codigo': '2015880',
  'Biología Celular y Molecular Básica': {'codigo': '2015882',
                                          'creditos': 3,
                                          'semestre': 4,
-                                         'tipo_asignatura': 'Fund. '
-                                                            'Obligatoria'},
+                                         'tipo_asignatura': 'Fund. Obligatoria'},
  'Biología de plantas': {'codigo': '2015877',
                          'creditos': 3,
                          'semestre': 1,
@@ -310,7 +309,8 @@ asignaturas_posgrado = {
 
 
 
-CARPETA_PDFS = "/home/jugalindog/Documents/Historias academicas/activos"
+#CARPETA_PDFS = "/home/jugalindog/Documents/Historias academicas/activos"
+CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica/activos"
 #CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
                 
 datos = []
@@ -362,6 +362,7 @@ for archivo in os.listdir(CARPETA_PDFS):
         j = 0
         while j < len(lineas):
             actual = lineas[j].strip()
+            print(actual)
             match_codigo = None
             codigo = None
 
