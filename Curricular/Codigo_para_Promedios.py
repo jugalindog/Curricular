@@ -56,6 +56,7 @@ for archivo in os.listdir(CARPETA_PDFS):
     texto_prom = bloque_prom.group(1)
     tokens = texto_prom.replace("\n", " ").split()
     datos_limpios = [t.strip() for t in tokens if t.strip() and t != ',']
+    print(datos_limpios)
 
     tabla_actual = 'Promedio Academico'
     i = 0

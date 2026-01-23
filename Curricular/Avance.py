@@ -4,7 +4,7 @@ import unicodedata
 
 # Se importa la malla curricular para saber qué asignaturas debe ver el estudiante
 try:
-    from prueba10 import malla_curricular
+    from Historial_Academica import malla_curricular
 except ImportError:
     print("ADVERTENCIA: No se pudo importar 'malla_curricular' desde 'prueba10.py'. La proyección no funcionará.")
     malla_curricular = {}

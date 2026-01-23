@@ -7,8 +7,8 @@ from Historias_academica import malla_curricular # Importar para acceder a los c
 # --- Rutas ---
 #RUTA_ESTUDIANTES = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Historias_academicas.xlsx"
 #RUTA_ESTUDIANTES = r"C:\Users\jp2g\Documents\PASANTIA\Curricular\Curricular\Estudiantes_simulados.xlsx"
-RUTA_ESTUDIANTES ="/home/jugalindog/Pasantia/Curricular/Curricular/Historias_academicas.xlsx"
-
+#RUTA_ESTUDIANTES ="/home/jugalindog/Pasantia/Curricular/Curricular/Historias_academicas.xlsx"
+RUTA_ESTUDIANTES ="/home/jugalindog/Pasantia/Curricular/Curricular/Historias_academicas3.xlsx"
 def normalize_name(name):
     """Convierte a minúsculas, quita espacios y acentos."""
     if not isinstance(name, str):

@@ -75,5 +75,6 @@ prerequisitos = {'Agroclimatología': [[(('Ninguno', None), None)],'AND'],
  'Sociología Rural': [[('inducción a la ingeniería agronómica', None)],'AND'],
  'Tecnología de la Poscosecha': [[('Fisiología de la producción vegetal','2015891')],
                                  [('Microbiología', '2015903')],'AND'],
- 'Trabajo de Grado': [[('Ciclo i: formulación y evaluación de proyect', '2015883')],'AND']
+ 'Trabajo de Grado': [[('Ciclo i: formulación y evaluación de proyect', '2015883')],'AND'],
+ 'Trabajo de Grado - Asignaturas de Posgrado': [[('Ciclo i: formulación y evaluación de proyect', '2015883')],'AND']
  }
