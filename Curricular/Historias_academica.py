@@ -310,8 +310,8 @@ asignaturas_posgrado = {
 
 
 #CARPETA_PDFS = "/home/jugalindog/Documents/Historias academicas/activos"
-CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica/activos"
-#CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
+#CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica/activos"
+CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
                 
 datos = []
 
@@ -497,6 +497,6 @@ for archivo in os.listdir(CARPETA_PDFS):
 
 
 # Exportar a Excel
-df = pd.DataFrame(datos)
-df.to_excel("Historias_academicas.xlsx", index=False)
+#df = pd.DataFrame(datos)
+#df.to_excel("Historias_academicas.xlsx", index=False)
 print("Archivo generado correctamente.")

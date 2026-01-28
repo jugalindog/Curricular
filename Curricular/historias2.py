@@ -310,8 +310,8 @@ asignaturas_posgrado = {
 
 
 #CARPETA_PDFS = "/home/jugalindog/Documents/Historias academicas/activos"
-CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica/activos"
-#CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
+#CARPETA_PDFS = "/home/jugalindog/Pasantia/Curricular/Curricular/Historial_Academica/activos"
+CARPETA_PDFS = "C:\\Users\\JuanPabloGalindoGóme\Documents\\Curricular\\Curricular\\Historial_Academica\\activos"
                 
 datos = []
 
