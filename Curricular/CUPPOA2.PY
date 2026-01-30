@@ -5,7 +5,7 @@ import os
 
 # --- IMPORTACIONES LOCALES ---
 from prerequisitos_corregido import prerequisitos
-from Historias_academica import malla_curricular 
+from Historias_academica import malla_curricular
 
 # --- RUTAS ---
 #RUTA_ESTUDIANTES = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Historias_academicas.xlsx"
@@ -257,7 +257,7 @@ def main():
             elif nombre_malla_norm in alias_materias:
                 nombres_alt = alias_materias[nombre_malla_norm]
                 if historial[historial['asignatura_normalizada'].isin(nombres_alt)].shape[0] > 0:
-                     ya_vio_la_materia = True
+                    ya_vio_la_materia = True
             
             # Si ya la vio, pasamos a la siguiente materia sin hacer nada más
             if ya_vio_la_materia: 

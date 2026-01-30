@@ -2,7 +2,8 @@ import pandas as pd
 import unicodedata
 import re
 from prerequisitos_corregido import prerequisitos
-from Historias_academica import malla_curricular # Importar para acceder a los códigos
+#from Historias_academica import malla_curricular # Importar para acceder a los códigos
+from malla_FCA import malla_curricular # Importar para acceder a los códigos
 
 # --- Rutas ---
 #RUTA_ESTUDIANTES = r"C:\Users\JuanPabloGalindoGóme\Documents\Curricular\Historias_academicas.xlsx"
